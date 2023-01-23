@@ -15,7 +15,7 @@ go install github.com/MadAppGang/fsmfy
 As usual go generator add the line in any go file:
 
 ```go
-//go:generate fmsfy test.json MyFSM
+//go:generate fsmfy test.json MyFSM
 ```
 
 The first argument `test.json` is FSM machine description from XState JS library. You can gran XState machine and run in console: `JSON.stringify(machine)`. 
