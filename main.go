@@ -44,6 +44,10 @@ type Input struct {
 	TypeName     string
 }
 
+func (i Input) StateName(s string) string {
+	return stateName(s)
+}
+
 type srcState struct {
 	On   map[string]string `json:"on,omitempty"`
 	Type string            `json:"type,omitempty"`
@@ -166,63 +170,67 @@ import (
 )
 
 type (
+	// {{ .TypeName }}State represents all states for this FSM.
 	{{ .TypeName }}State string
+	//{{ .TypeName }}Event  represents all events for this FSM.
 	{{ .TypeName }}Event string
 )
 
 const (
-	// States
-	// {{ .InitialState.NameGo }} is initial state
+	// States.
+	// {{ .InitialState.NameGo }} is initial state.
 	{{ .InitialState.NameGo }} {{ .TypeName }}State = "{{ .InitialState.Name }}"
 	{{ range .States }} 
-	// {{ .NameGo }} state
-	{{ .NameGo }} {{ .TypeName }}tate = "{{ .Name }}" {{ end }}
+	// {{ .NameGo }} state.
+	{{ .NameGo }} {{ $.TypeName }}State = "{{ .Name }}" {{ end }}
 
-	//Events
+	//Events.
 	{{ range .Events }}
-	// {{ .NameGo }} state
-	{{ .NameGo }} {{ .TypeName }}Event = "{{ .Name }}"{{ end }}
+	// {{ .NameGo }} state.
+	{{ .NameGo }} {{ $.TypeName }}Event = "{{ .Name }}"{{ end }}
 )
 
+//{{ .TypeName }}  implements FSM.
 type {{ .TypeName }} struct {
 	fsm *fsm.FSM
 }
 
-func New{{ .TypeName }}() *{{ .TypeName }} {
+//New{{ .TypeName }} creates new FSM with callbacks provided.
+func New{{ .TypeName }}(callbacks fsm.Callbacks) *{{ .TypeName }} {
 	fsm := fsm.NewFSM(
-		"closed",
+		{{ .InitialState.NameGo }}.String(),
 		fsm.Events{
 			{{ range .Events }}
-				{ Name: {{ .NameGo }}.String(), Src:[]string{ {{ range $i, $e := .From }}{{ if $i }}, {{ end }}"{{ $e }}"{{ end }} }, Dst: {{ .ToGo }}.String() },  {{ end }}			
-			{Name: "open", Src: []string{"closed"}, Dst: "open"},
-			{Name: "close", Src: []string{"open"}, Dst: "closed"},
+				{ Name: {{ .NameGo }}.String(), Src:[]string{ {{ range $i, $e := .From }}{{ if $i }}, {{ end }}{{ $.StateName $e }}.String(){{ end }} }, Dst: {{ .ToGo }}.String() },  {{ end }}			
 		},
-		fsm.Callbacks{},
+		callbacks,
 	)
 	return &{{ .TypeName }}{fsm: fsm}
 }
 
+// String returns string representation of the state.
 func (s {{ .TypeName }}State) String() string {
 	return string(s)
 }
 
+// String returns string representation of the event.
 func (s {{ .TypeName }}Event) String() string {
 	return string(s)
 }
 
-// Current returns the current state of the FSM.
-func (f *{{ .TypeName }}) Current() FSMState {
-	return FSMState(f.fsm.Current())
+// Current returns the current state of the {{ .TypeName }}.
+func (f *{{ .TypeName }}) Current() {{ .TypeName }}State {
+	return {{ .TypeName }}State(f.fsm.Current())
 }
 
 // Is returns true if state is the current state.
-func (f *{{ .TypeName }}) Is(state FSMState) bool {
+func (f *{{ .TypeName }}) Is(state {{ .TypeName }}State) bool {
 	return f.fsm.Is(state.String())
 }
 
 // SetState allows the user to move to the given state from current state.
 // The call does not trigger any callbacks, if defined.
-func (f *{{ .TypeName }}) SetState(state FSMState) {
+func (f *{{ .TypeName }}) SetState(state {{ .TypeName }}State) {
 	f.fsm.SetState(state.String())
 }
 
