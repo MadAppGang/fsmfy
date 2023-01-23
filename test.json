@@ -1,0 +1,57 @@
+{
+    "id": "gig",
+    "initial": "idle",
+    "description": "Gig booking flow",
+    "context": {
+        "retries": 0
+    },
+    "states": {
+        "idle": {
+            "on": {
+                "BOOK_A_GIG": "created"
+            }
+        },
+        "created": {
+            "on": {
+                "SEND_MESSAGE": "created",
+                "SET_PRICE": "created",
+                "CANCEL": "canceled",
+                "MUSO_CONFIRM": "awaiting_payment"
+            }
+        },
+        "canceled": {
+            "on": {
+                "ARCHIVE": "archived"
+            }
+        },
+        "archived": {
+            "type": "final"
+        },
+        "awaiting_payment": {
+            "on": {
+                "CANCEL": "canceled",
+                "PAY_SUCCESSFUL": "confirmed",
+                "PAYMENT_FAILED": "awaiting_payment"
+            }
+        },
+        "confirmed": {
+            "on": {
+                "CANCEL_BEFORE_THRESHOLD": "canceled",
+                "COMPLETE": "completed",
+                "AUTO_COMPLETE_ON_TIMEOUT": "completed",
+                "MUSO_CANCEL": "canceled",
+                "DISPUTE": "dispute"
+            }
+        },
+        "dispute": {
+            "on": {
+                "RESOLVE": "completed"
+            }
+        },
+        "completed": {
+            "on": {
+                "ARCHIVE": "archived"
+            }
+        }
+    }
+}
